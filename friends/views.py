@@ -22,6 +22,8 @@ class FriendshipCreateView(generics.CreateAPIView):
         user_id = self.request.data.get('user_id')
         friend_id = self.request.data.get('friend_id')
         if user_id and friend_id:
+            if user_id == friend_id:
+                raise ValidationError("You can't send the request yourself.")
             friendship_to = Friendship.objects.filter(from_user=friend_id, to_user=user_id, status='pending').first()
             friendship = Friendship.objects.filter(from_user=user_id, to_user=friend_id).first()
             if not friendship:
