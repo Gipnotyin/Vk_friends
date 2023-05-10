@@ -46,6 +46,8 @@ class FriendshipCreateView(generics.CreateAPIView):
 def update_friendship_status(request):
     from_user_id = request.data.get('from_user')
     to_user_id = request.data.get('to_user')
+    if from_user_id == to_user_id:
+        return Response({'error': 'Invalid action.'}, status=status.HTTP_400_BAD_REQUEST)
     action = request.data.get('action')
     print(from_user_id, to_user_id)
     friendship = Friendship.objects.filter(from_user_id=from_user_id, to_user_id=to_user_id, status='pending').first()
@@ -105,6 +107,8 @@ def friendship_status(request):
     user_id = request.GET.get('user')
     friend_id = request.GET.get('friend')
     friendship_status = 'Нет ничего'
+    if user_id == friend_id:
+        return Response({'friendship_status': 'I love VK'})
     if user_id and friend_id:
         friendship = Friendship.objects.filter(
             (models.Q(from_user=user_id) & models.Q(to_user=friend_id)) |
@@ -125,6 +129,8 @@ def friendship_status(request):
 def remove_friend(request):
     user_id = int(request.data.get('user'))
     friend_id = int(request.data.get('friend'))
+    if user_id == friend_id:
+        return Response({'success': False})
     if user_id and friend_id:
         friendship = Friendship.objects.filter(
             from_user=user_id,

@@ -1,0 +1,249 @@
+openapi: 3.0.0
+info:
+  title: Django Friends Service API
+  description: API documentation for Django Friends Service
+  version: 1.0.0
+paths:
+  /register/:
+    post:
+      summary: Create a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: Username of the new user
+              required:
+                - username
+      responses:
+        '201':
+          description: User successfully created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    description: ID of the created user
+                  username:
+                    type: string
+                    description: Username of the created user
+        '400':
+          description: Bad request, username is missing or invalid
+  /friendship/create/:
+    post:
+      summary: Send a friend request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                  description: ID of the user sending the friend request
+                friend_id:
+                  type: integer
+                  description: ID of the user receiving the friend request
+              required:
+                - user_id
+                - friend_id
+      responses:
+        '201':
+          description: Friend request successfully sent
+        '400':
+          description: Bad request, user_id or friend_id is missing or invalid
+        '409':
+          description: Conflict, friend request already exists or users are already friends
+  /friendship-request/:
+    post:
+      summary: Accept or reject a friend request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                from_user:
+                  type: integer
+                  description: ID of the user who sent the friend request
+                to_user:
+                  type: integer
+                  description: ID of the user who received the friend request
+                action:
+                  type: string
+                  enum: [accept, reject]
+                  description: Action to perform (accept or reject)
+              required:
+                - from_user
+                - to_user
+                - action
+      responses:
+        '200':
+          description: Friend request status updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  friendship_status:
+                    type: string
+                    description: Updated friendship status (accepted or rejected)
+        '400':
+          description: Bad request, invalid action or from_user is the same as to_user
+        '404':
+          description: Friendship not found
+  /friendship_requests_sent/{user_id}/:
+    get:
+      summary: Get a list of sent friend requests
+      parameters:
+        - name: user_id
+          in: path
+          description: ID of the user
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of sent friend requests retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Friendship'
+        '404':
+          description: User not found or no sent friend requests found
+  /friendship_requests_received/{user_id}/:
+    get:
+      summary: Get a list of received friend requests
+      parameters:
+        - name: user_id
+          in: path
+          description: ID of the user
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of received friend requests retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Friendship'
+        '404':
+          description: User not found or no received friend requests found
+  /friend_list/{user_id}/:
+    get:
+      summary: Get a list of friends
+      parameters:
+        - name: user_id
+          in: path
+          description: ID of the user
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of friends retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Friendship'
+        '404':
+          description: User not found or no friends found
+  /friendship_status/:
+    get:
+      summary: Get friendship status
+      parameters:
+        - name: user
+          in: query
+          description: ID of the user
+          required: true
+          schema:
+            type: integer
+        - name: friend
+          in: query
+          description: ID of the friend
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Friendship status retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  friendship_status:
+                    type: string
+        '404':
+          description: User not found or friendship status not available
+  /remove-friend/:
+    post:
+      summary: Remove a friend
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user:
+                  type: integer
+                friend:
+                  type: integer
+              required:
+                - user
+                - friend
+      responses:
+        '200':
+          description: Friend removed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        '400':
+          description: Invalid request body or operation not allowed
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+    Friendship:
+      type: object
+      properties:
+        id:
+          type: integer
+        user1:
+          $ref: '#/components/schemas/User'
+        user2:
+          $ref: '#/components/schemas/User'
+        status:
+          type: string
+          enum:
+            - pending
+            - accepted
+            - rejected
+        created_at:
+          type: string
+          format: date-time
